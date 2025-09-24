@@ -51,13 +51,24 @@ public:
 		
 		QVBoxLayout *layout = new QVBoxLayout(this);
 		
-		// Title
+		// Title with icon
+		QHBoxLayout *titleLayout = new QHBoxLayout();
+		
+		QLabel *iconLabel = new QLabel();
+		QIcon mcpIcon(":/icons/mcp.png");
+		QPixmap iconPixmap = mcpIcon.pixmap(48, 48);
+		iconLabel->setPixmap(iconPixmap);
+		titleLayout->addWidget(iconLabel);
+		
 		QLabel *titleLabel = new QLabel(QString("Qt MCP Plugin v%1").arg(PLUGIN_VERSION_STRING));
 		QFont titleFont = titleLabel->font();
 		titleFont.setPointSize(14);
 		titleFont.setBold(true);
 		titleLabel->setFont(titleFont);
-		layout->addWidget(titleLabel);
+		titleLayout->addWidget(titleLabel);
+		titleLayout->addStretch();
+		
+		layout->addLayout(titleLayout);
 		
 		// Status section
 		QHBoxLayout *statusLayout = new QHBoxLayout();
@@ -190,6 +201,7 @@ public:
 		ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
 
 		// Create the MCP icon from resource
+		// Note: Menu icons work on Windows but may not display on macOS due to Apple's HIG
 		QIcon mcpIcon(":/icons/mcp.png");
 
 		// Add separator for About

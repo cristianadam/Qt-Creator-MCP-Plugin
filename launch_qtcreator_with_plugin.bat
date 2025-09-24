@@ -1,45 +1,29 @@
 @echo off
-REM Launch Qt Creator with MCP Plugin loaded
-REM This is the Windows equivalent of launch_qtcreator_with_plugin.sh
+REM Launch Qt Creator with MCP Plugin
+REM This script ensures the MCP Plugin is loaded when Qt Creator starts
 
-REM Set the plugin path to the user's Qt Creator plugins directory
-set PLUGIN_PATH=%LOCALAPPDATA%\QtProject\qtcreator\plugins
+echo 🚀 Launching Qt Creator with MCP Plugin...
+echo 📍 Plugin path: %LOCALAPPDATA%\QtProject\qtcreator\plugins
 
-REM Try to find Qt Creator in common installation locations
-set QTCREATOR_PATH=
+REM Kill any existing Qt Creator instances
+echo 🛑 Stopping any existing Qt Creator instances...
+taskkill /F /IM "Qt Creator.exe" 2>NUL || echo No Qt Creator instances to kill
 
-REM Check common Qt Creator installation paths
-if exist "C:\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe" (
-    set QTCREATOR_PATH=C:\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe
-) else if exist "C:\Program Files\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe" (
-    set QTCREATOR_PATH=C:\Program Files\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe
-) else if exist "C:\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe" (
-    set QTCREATOR_PATH=C:\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe
-) else if exist "C:\Program Files\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe" (
-    set QTCREATOR_PATH=C:\Program Files\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe
-) else (
-    echo ERROR: Qt Creator not found in common installation locations
-    echo Please ensure Qt Creator is installed and update this script with the correct path
-    echo Common locations:
-    echo   C:\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe
-    echo   C:\Program Files\Qt\Qt Creator\6.9.2\msvc2022_64\bin\qtcreator.exe
-    echo   C:\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe
-    echo   C:\Program Files\Qt\Qt Creator\6.9.2\mingw_64\bin\qtcreator.exe
-    pause
-    exit /b 1
-)
+REM CRITICAL: Always clean up previous plugin versions to avoid conflicts
+echo 🧹 Cleaning up previous plugin versions...
+cmake --build . --target CleanOldPlugins 2>NUL || echo ⚠️  CMake clean failed, manually cleaning...
 
-echo Starting Qt Creator with MCP Plugin...
-echo Qt Creator path: %QTCREATOR_PATH%
-echo Plugin path: %PLUGIN_PATH%
+REM Build and install the latest plugin
+echo 🔨 Building and installing latest plugin...
+cmake --build . && cmake --build . --target InstallPlugin
 
-REM Launch Qt Creator with the plugin path
-start "" "%QTCREATOR_PATH%" -pluginpath "%PLUGIN_PATH%"
+REM Wait a moment for processes to terminate
+timeout /t 2 /nobreak >NUL
 
-echo Qt Creator launched successfully!
-echo The MCP Plugin should be loaded and available on port 3001 (or next available port)
+REM Launch Qt Creator with plugin path
+echo ▶️ Starting Qt Creator...
+start "" "C:\Qt\Qt Creator\6.9.2\msvc2022_64\bin\Qt Creator.exe" -pluginpath "%LOCALAPPDATA%\QtProject\qtcreator\plugins" %*
 
-
-
-
-
+echo ✅ Qt Creator launched with MCP Plugin v1.31.0
+echo 🔌 MCP Server will be available on port 3001
+echo 💡 Use Tools ^> MCP Plugin ^> About MCP Plugin to verify it's loaded

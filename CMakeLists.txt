@@ -215,9 +215,28 @@ else()
 endif()
 
 if (QtCreatorExecutable)
-  add_custom_target(RunQtCreator
-    COMMAND ${QtCreatorExecutable} -pluginpath "${QTCREATOR_PLUGINS_DIR}"
-    DEPENDS InstallPlugin
-  )
+  if(WIN32)
+    add_custom_target(RunQtCreator
+      COMMAND ${CMAKE_COMMAND} -E echo "Killing existing Qt Creator instances..."
+      COMMAND taskkill /F /IM "Qt Creator.exe" 2>NUL || echo "No Qt Creator instances to kill"
+      COMMAND ${CMAKE_COMMAND} -E echo "Starting Qt Creator with MCP Plugin..."
+      COMMAND ${QtCreatorExecutable} -pluginpath "${QTCREATOR_PLUGINS_DIR}"
+      DEPENDS InstallPlugin
+    )
+  else()
+    add_custom_target(RunQtCreator
+      COMMAND ${CMAKE_COMMAND} -E echo "Killing existing Qt Creator instances..."
+      COMMAND pkill -f "Qt Creator" || echo "No Qt Creator instances to kill"
+      COMMAND ${CMAKE_COMMAND} -E echo "Cleaning up previous plugin versions..."
+      COMMAND ${CMAKE_COMMAND} --build . --target CleanOldPlugins
+      COMMAND ${CMAKE_COMMAND} -E echo "Building and installing latest plugin..."
+      COMMAND ${CMAKE_COMMAND} --build . --target InstallPlugin
+      COMMAND ${CMAKE_COMMAND} -E echo "Waiting for processes to terminate..."
+      COMMAND sleep 2
+      COMMAND ${CMAKE_COMMAND} -E echo "Starting Qt Creator with MCP Plugin..."
+      COMMAND ${QtCreatorExecutable} -pluginpath "${QTCREATOR_PLUGINS_DIR}"
+      DEPENDS InstallPlugin
+    )
+  endif()
   set_target_properties(RunQtCreator PROPERTIES FOLDER "qtc_runnable")
 endif()
