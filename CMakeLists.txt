@@ -70,6 +70,8 @@ add_qtc_plugin(Qt_MCP_Plugin
     mcpcommands.h
     issuesmanager.cpp
     issuesmanager.h
+    mcp.png
+    mcp.qrc
 )
 
 # Set plugin properties without version in filename

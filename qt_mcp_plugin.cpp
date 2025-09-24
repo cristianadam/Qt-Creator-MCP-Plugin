@@ -15,6 +15,7 @@
 #include <extensionsystem/iplugin.h>
 
 #include <QAction>
+#include <QIcon>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMessageBox>
@@ -188,12 +189,16 @@ public:
 		menu->menu()->setTitle(Tr::tr("MCP Plugin"));
 		ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
 
+		// Create the MCP icon from resource
+		QIcon mcpIcon(":/icons/mcp.png");
+
 		// Add separator for About
 		menu->addSeparator();
 
 		// About action (shows the existing status dialog)
 		ActionBuilder(this, Constants::ABOUT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
+				.setIcon(mcpIcon)
 				.setText(QString("About MCP Plugin v%1").arg(PLUGIN_VERSION_STRING))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::showAbout);
 
@@ -244,16 +249,19 @@ public:
 		ActionBuilder(this, Constants::LIST_ISSUES_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("List Issues"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListIssues);
 
 		ActionBuilder(this, Constants::GET_METHOD_METADATA_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Get Method Metadata"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetMethodMetadata);
 
 		ActionBuilder(this, Constants::SET_METHOD_METADATA_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Set Method Metadata"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeSetMethodMetadata);
 
 		menu->addSeparator();
@@ -261,26 +269,31 @@ public:
 		ActionBuilder(this, Constants::BUILD_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Build Project"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeBuild);
 
 		ActionBuilder(this, Constants::RUN_PROJECT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Run Project"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeRunProject);
 
 		ActionBuilder(this, Constants::DEBUG_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Debug Project"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeDebug);
 
 		ActionBuilder(this, Constants::STOP_DEBUG_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Stop Debugging"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeStopDebug);
 
 		ActionBuilder(this, Constants::CLEAN_PROJECT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
 				.setText(Tr::tr("Clean Project"))
+				.setIcon(mcpIcon)
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeCleanProject);
 
 		ActionBuilder(this, Constants::SAVE_SESSION_ACTION_ID)
