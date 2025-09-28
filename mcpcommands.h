@@ -32,6 +32,7 @@ public:
     bool switchToBuildConfig(const QString &name);
     bool quit();
     QString getVersion();
+    QString getBuildStatus();
 
     // Additional useful commands
     QString getCurrentProject();
@@ -53,6 +54,13 @@ public:
     QString getMethodMetadata();
     QString setMethodMetadata(const QString &method, int timeoutSeconds);
     int getMethodTimeout(const QString &method) const;
+    
+    // Debugging management helpers
+    bool isDebuggingActive();
+    QString abortDebug();
+    bool killDebuggedProcesses();
+    void performDebuggingCleanup();
+    bool performDebuggingCleanupSync();
     
 
 signals:

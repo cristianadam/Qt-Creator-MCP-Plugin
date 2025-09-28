@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
+# IMPORTANT: This plugin ONLY builds in Release mode
+# Debug builds are not supported and will cause runtime issues
+# Always use: cmake --build . --config Release
+
+# Library path configuration will be set after target definition
+
 # Qt Creator installation path - platform specific
 if(WIN32)
     # Windows paths - user should set these via CMAKE_PREFIX_PATH
@@ -52,11 +58,11 @@ add_qtc_plugin(Qt_MCP_Plugin
   PLUGIN_DEPENDS
     QtCreator::Core
     QtCreator::ProjectExplorer
-  DEPENDS
-    Qt::Widgets
-    Qt::Network
-    QtCreator::ExtensionSystem
-    QtCreator::Utils
+         DEPENDS
+           Qt::Widgets
+           Qt::Network
+           QtCreator::ExtensionSystem
+           QtCreator::Utils
   SOURCES
     .github/workflows/build_cmake.yml
     .github/workflows/README.md
@@ -70,6 +76,10 @@ add_qtc_plugin(Qt_MCP_Plugin
     mcpcommands.h
     issuesmanager.cpp
     issuesmanager.h
+    httpparser.cpp
+    httpparser.h
+    httpresponse.cpp
+    httpresponse.h
     mcp.png
     mcp.qrc
 )
@@ -79,11 +89,52 @@ set_target_properties(Qt_MCP_Plugin PROPERTIES
     SOVERSION ${PLUGIN_VERSION_MAJOR}
 )
 
-# Generate the plugin JSON file
+# Configure library paths to use Qt Creator's bin directory
+# This allows the plugin to link directly to Qt libraries without copying DLLs
+if(WIN32)
+    # Set RPATH to Qt Creator bin directory for Windows
+    set_target_properties(Qt_MCP_Plugin PROPERTIES
+        INSTALL_RPATH "../bin"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        # Force linking against Qt Creator's Qt libraries
+        LINK_FLAGS "/LIBPATH:${CMAKE_PREFIX_PATH}/bin"
+    )
+endif()
+
+# Generate the plugin JSON file with version substitution
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Qt_MCP_Plugin.json.in
     ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json
     @ONLY
+)
+
+# Generate version.h from version.cmake variables
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.h
+    @ONLY
+)
+
+# Generate the MCP discovery file with version substitution
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Qt_MCP_Plugin_discovery.json.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json
+    @ONLY
+)
+
+# Create a custom target to ensure the JSON files are always generated
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/Qt_MCP_Plugin.json.in
+        ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json
+    COMMAND ${CMAKE_COMMAND} -E env sed -i '' 's/@PLUGIN_VERSION@/${PLUGIN_VERSION}/g' ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/Qt_MCP_Plugin_discovery.json.in
+        ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json
+    COMMAND ${CMAKE_COMMAND} -E env sed -i '' 's/@PLUGIN_VERSION@/${PLUGIN_VERSION}/g' ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json
+    DEPENDS Qt_MCP_Plugin.json.in Qt_MCP_Plugin_discovery.json.in
+    COMMENT "Generating plugin JSON and discovery files with version ${PLUGIN_VERSION}"
 )
 
 # Use the standard Qt Creator plugins directory - platform specific
@@ -112,12 +163,14 @@ if(WIN32)
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_5.dll"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_6.dll"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin.json"
+            "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_discovery.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_0.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_3.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_4.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_5.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_6.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json"
+            "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_1.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_2.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_3.json"
@@ -138,12 +191,17 @@ else()
             "${QTCREATOR_PLUGINS_DIR}/libQt_MCP_Plugin_v1_5.dylib"
             "${QTCREATOR_PLUGINS_DIR}/libQt_MCP_Plugin_v1_6.dylib"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin.json"
+            "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_discovery.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_0.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_3.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_4.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_5.json"
             "${QTCREATOR_PLUGINS_DIR}/Qt_MCP_Plugin_v1_6.json"
+            "/Users/davec/Developer/Qt/Qt Creator.app/Contents/PlugIns/qtcreator/libQt_MCP_Plugin.dylib"
+            "/Users/davec/Developer/Qt/Qt Creator.app/Contents/PlugIns/qtcreator/Qt_MCP_Plugin.json"
+            "/Users/davec/Developer/Qt/Qt Creator.app/Contents/PlugIns/qtcreator/Qt_MCP_Plugin_discovery.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json"
+            "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_1.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_2.json"
             "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_v1_3.json"
@@ -154,32 +212,14 @@ else()
     )
 endif()
 
-# Custom target to install the plugin to the external plugins directory - platform specific
-if(WIN32)
-    add_custom_target(InstallPlugin
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${QTCREATOR_PLUGINS_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_CURRENT_BINARY_DIR}/lib/qtcreator/plugins/Qt_MCP_Plugin.dll"
-            "${QTCREATOR_PLUGINS_DIR}/"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json"
-            "${QTCREATOR_PLUGINS_DIR}/"
-        DEPENDS Qt_MCP_Plugin
-        COMMENT "Installing plugin to external Qt Creator plugins directory (Windows)"
-    )
-else()
-    add_custom_target(InstallPlugin
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${QTCREATOR_PLUGINS_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_CURRENT_BINARY_DIR}/Qt Creator.app/Contents/PlugIns/qtcreator/libQt_MCP_Plugin.dylib"
-            "${QTCREATOR_PLUGINS_DIR}/"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json"
-            "${QTCREATOR_PLUGINS_DIR}/"
-        DEPENDS Qt_MCP_Plugin
-        COMMENT "Installing plugin to external Qt Creator plugins directory (macOS/Linux)"
-    )
-endif()
+# Custom target to install the plugin using the complete lifecycle script
+add_custom_target(InstallPlugin
+    COMMAND ${CMAKE_COMMAND} -E echo "🚀 Running complete plugin lifecycle with build.py..."
+    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR} python3 ${CMAKE_CURRENT_SOURCE_DIR}/build.py
+    
+    DEPENDS Qt_MCP_Plugin ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin.json ${CMAKE_CURRENT_BINARY_DIR}/Qt_MCP_Plugin_discovery.json
+    COMMENT "Installing plugin using complete lifecycle management (build.py)"
+)
 
 # Enable the Run button in Qt Creator - platform specific
 if(WIN32)

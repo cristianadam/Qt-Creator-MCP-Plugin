@@ -15,7 +15,6 @@ const char STOP_DEBUG_ACTION_ID[] = "Qt_MCP_Plugin.StopDebug";
 const char LIST_PROJECTS_ACTION_ID[] = "Qt_MCP_Plugin.ListProjects";
 const char LIST_BUILD_CONFIGS_ACTION_ID[] = "Qt_MCP_Plugin.ListBuildConfigs";
 const char QUIT_ACTION_ID[] = "Qt_MCP_Plugin.Quit";
-const char GET_VERSION_ACTION_ID[] = "Qt_MCP_Plugin.GetVersion";
 const char GET_CURRENT_PROJECT_ACTION_ID[] = "Qt_MCP_Plugin.GetCurrentProject";
 const char GET_CURRENT_BUILD_CONFIG_ACTION_ID[] = "Qt_MCP_Plugin.GetCurrentBuildConfig";
 const char RUN_PROJECT_ACTION_ID[] = "Qt_MCP_Plugin.RunProject";
@@ -27,5 +26,9 @@ const char SAVE_SESSION_ACTION_ID[] = "Qt_MCP_Plugin.SaveSession";
 const char LIST_ISSUES_ACTION_ID[] = "Qt_MCP_Plugin.ListIssues";
 const char GET_METHOD_METADATA_ACTION_ID[] = "Qt_MCP_Plugin.GetMethodMetadata";
 const char SET_METHOD_METADATA_ACTION_ID[] = "Qt_MCP_Plugin.SetMethodMetadata";
+
+// MCP Protocol Discovery actions
+const char MCP_INITIALIZE_ACTION_ID[] = "Qt_MCP_Plugin.MCPInitialize";
+const char MCP_TOOLS_LIST_ACTION_ID[] = "Qt_MCP_Plugin.MCPToolsList";
 
 } // namespace Qt_MCP_Plugin::Constants

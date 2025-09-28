@@ -10,6 +10,8 @@
 #include <QTimer>
 
 #include "mcpcommands.h"
+#include "httpparser.h"
+#include "httpresponse.h"
 
 namespace Qt_MCP_Plugin {
 namespace Internal {
@@ -26,20 +28,29 @@ public:
     void stop();
     bool isRunning() const;
     quint16 getPort() const;
+    
+    // Public method to call MCP methods directly
+    QJsonObject callMCPMethod(const QString &method, const QJsonValue &params = QJsonValue());
 
 private slots:
     void handleNewConnection();
     void handleClientData();
     void handleClientDisconnected();
 
-private:
-    void sendResponse(QTcpSocket *client, const QJsonObject &response);
-    void processRequest(QTcpSocket *client, const QJsonObject &request);
-    QJsonObject createErrorResponse(int code, const QString &message, const QJsonValue &id = QJsonValue::Null);
-    QJsonObject createSuccessResponse(const QJsonValue &result, const QJsonValue &id = QJsonValue::Null);
+       private:
+           QJsonObject processRequest(const QJsonObject &request);
+           QJsonObject createErrorResponse(int code, const QString &message, const QJsonValue &id = QJsonValue::Null);
+           QJsonObject createSuccessResponse(const QJsonValue &result, const QJsonValue &id = QJsonValue::Null);
+           void sendResponse(QTcpSocket *client, const QJsonObject &response);
 
-private:
-    QTcpServer *m_serverP;
+           // HTTP handling methods
+           bool isHttpRequest(const QByteArray &data);
+           void handleHttpRequest(QTcpSocket *client, const HttpParser::HttpRequest &request);
+           void sendHttpResponse(QTcpSocket *client, const QByteArray &httpResponse);
+
+       private:
+           QTcpServer *m_tcpServerP;
+           HttpParser *m_httpParserP;
     QList<QTcpSocket*> m_clients;
     MCPCommands *m_commandsP;
     quint16 m_port;

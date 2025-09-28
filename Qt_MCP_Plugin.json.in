@@ -1,13 +1,13 @@
 {
     "Id" : "qt_mcp_plugin",
     "Name" : "Qt MCP Plugin",
-    "Version" : "1.25.0",
-    "CompatVersion" : "1.25.0",
+    "Version" : "@PLUGIN_VERSION@",
+    "CompatVersion" : "@PLUGIN_VERSION@",
     "Vendor" : "Metamuse Media",
     "VendorId" : "metamusemedia",
     "Copyright" : "(C) Metamuse Media",
     "License" : "LGPL",
-    "Description" : "Provides MCP Support for Qt Creator - Non-Blocking Event Loop Version 1.25",
+    "Description" : "Provides MCP Support for Qt Creator - Professional Menu Icons Version @PLUGIN_VERSION@",
     "Url" : "https://www.metamusemedia.com",
     "DocumentationUrl" : "https://github.com/davecotter/Qt-Creator-MCP-Plugin",
     "Dependencies" : [

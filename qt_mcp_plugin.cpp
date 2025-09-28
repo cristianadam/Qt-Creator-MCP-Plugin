@@ -20,6 +20,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QDebug>
+#include <QLoggingCategory>
 #include <iostream>
 #include <QTextStream>
 #include <QDialog>
@@ -33,6 +34,9 @@
 #include <QScrollArea>
 
 using namespace Core;
+
+// Define logging category for the plugin
+Q_LOGGING_CATEGORY(mcpPlugin, "qtcreator.mcpplugin", QtWarningMsg)
 
 namespace Qt_MCP_Plugin::Internal {
 
@@ -179,30 +183,46 @@ public:
 
 	void initialize() final
 	{
+		qCDebug(mcpPlugin) << "Qt MCP Plugin initializing...";
+		qCDebug(mcpPlugin) << "Plugin version:" << PLUGIN_VERSION_STRING;
+		qCDebug(mcpPlugin) << "Qt version:" << QT_VERSION_STR;
+		qCDebug(mcpPlugin) << "Build type:" << 
+#ifdef QT_NO_DEBUG
+			"Release"
+#else
+			"Debug"
+#endif
+			;
+		
 		// Create the MCP server and commands
+		qCDebug(mcpPlugin) << "Creating MCP server and commands...";
 		m_serverP = new MCPServer(this);
 		m_commandsP = new MCPCommands(this);
 
 		// Initialize the server
+		qCDebug(mcpPlugin) << "Starting MCP server...";
 		if (!m_serverP->start()) {
+			qCCritical(mcpPlugin) << "Failed to start MCP server";
 			QMessageBox::warning(ICore::dialogParent(),
 							   Tr::tr("MCP Plugin"),
 							   Tr::tr("Failed to start MCP server"));
 		} else {
+			qCInfo(mcpPlugin) << "MCP server started successfully on port" << m_serverP->getPort();
 			// Show startup message in General Messages panel
 			outputMessage(QString("MCP Plugin v%1 loaded and functioning - MCP server running on port %2")
 				.arg(PLUGIN_VERSION_STRING)
 				.arg(m_serverP->getPort()));
 		}
 
-		// Create the MCP Plugin menu
-		ActionContainer *menu = ActionManager::createMenu(Constants::MENU_ID);
-		menu->menu()->setTitle(Tr::tr("MCP Plugin"));
-		ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
-
 		// Create the MCP icon from resource
 		// Note: Menu icons work on Windows but may not display on macOS due to Apple's HIG
 		QIcon mcpIcon(":/icons/mcp.png");
+
+		// Create the MCP Plugin menu
+		ActionContainer *menu = ActionManager::createMenu(Constants::MENU_ID);
+		menu->menu()->setTitle(Tr::tr("MCP Plugin"));
+		menu->menu()->setIcon(mcpIcon);  // Add icon to the main menu
+		ActionManager::actionContainer(Core::Constants::M_TOOLS)->addMenu(menu);
 
 		// Add separator for About
 		menu->addSeparator();
@@ -210,114 +230,113 @@ public:
 		// About action (shows the existing status dialog)
 		ActionBuilder(this, Constants::ABOUT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setIcon(mcpIcon)
-				.setText(QString("About MCP Plugin v%1").arg(PLUGIN_VERSION_STRING))
+				.setText(QString("ℹ️ About MCP Plugin v%1").arg(PLUGIN_VERSION_STRING))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::showAbout);
 
 		// Add separator between About and commands
 		menu->addSeparator();
 
-		// MCP Command actions
-		ActionBuilder(this, Constants::GET_VERSION_ACTION_ID)
+		// MCP Protocol Discovery section
+		ActionBuilder(this, Constants::MCP_INITIALIZE_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Get Version"))
-				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetVersion);
+				.setText(Tr::tr("🚀 MCP: Initialize"))
+				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeMCPInitialize);
 
+		ActionBuilder(this, Constants::MCP_TOOLS_LIST_ACTION_ID)
+				.addToContainer(Constants::MENU_ID)
+				.setText(Tr::tr("🛠️ MCP: List Tools"))
+				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeMCPToolsList);
+
+		menu->addSeparator();
+
+		// Project Information section
 		ActionBuilder(this, Constants::LIST_SESSIONS_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("List Sessions"))
+				.setText(Tr::tr("📁 List Sessions"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListSessions);
 
 		ActionBuilder(this, Constants::LIST_PROJECTS_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("List Projects"))
+				.setText(Tr::tr("📂 List Projects"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListProjects);
 
 		ActionBuilder(this, Constants::LIST_BUILD_CONFIGS_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("List Build Configs"))
+				.setText(Tr::tr("⚙️ List Build Configs"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListBuildConfigs);
 
 		ActionBuilder(this, Constants::GET_CURRENT_PROJECT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Get Current Project"))
+				.setText(Tr::tr("📋 Get Current Project"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetCurrentProject);
 
 		ActionBuilder(this, Constants::GET_CURRENT_BUILD_CONFIG_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Get Current Build Config"))
+				.setText(Tr::tr("🔧 Get Current Build Config"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetCurrentBuildConfig);
 
 		ActionBuilder(this, Constants::GET_CURRENT_SESSION_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Get Current Session"))
+				.setText(Tr::tr("🎯 Get Current Session"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetCurrentSession);
 
 		ActionBuilder(this, Constants::LIST_OPEN_FILES_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("List Open Files"))
+				.setText(Tr::tr("📄 List Open Files"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListOpenFiles);
 
 		ActionBuilder(this, Constants::LIST_ISSUES_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("List Issues"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("⚠️ List Issues"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeListIssues);
 
 		ActionBuilder(this, Constants::GET_METHOD_METADATA_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Get Method Metadata"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("📊 Get Method Metadata"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeGetMethodMetadata);
 
 		ActionBuilder(this, Constants::SET_METHOD_METADATA_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Set Method Metadata"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("⚡ Set Method Metadata"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeSetMethodMetadata);
 
 		menu->addSeparator();
 
 		ActionBuilder(this, Constants::BUILD_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Build Project"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("🔨 Build Project"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeBuild);
 
 		ActionBuilder(this, Constants::RUN_PROJECT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Run Project"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("▶️ Run Project"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeRunProject);
 
 		ActionBuilder(this, Constants::DEBUG_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Debug Project"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("🐛 Debug Project"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeDebug);
 
 		ActionBuilder(this, Constants::STOP_DEBUG_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Stop Debugging"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("⏹️ Stop Debugging"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeStopDebug);
 
 		ActionBuilder(this, Constants::CLEAN_PROJECT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Clean Project"))
-				.setIcon(mcpIcon)
+				.setText(Tr::tr("🧹 Clean Project"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeCleanProject);
 
 		ActionBuilder(this, Constants::SAVE_SESSION_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Save Session"))
+				.setText(Tr::tr("💾 Save Session"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeSaveSession);
 
 		menu->addSeparator();
 
 		ActionBuilder(this, Constants::QUIT_ACTION_ID)
 				.addToContainer(Constants::MENU_ID)
-				.setText(Tr::tr("Quit Qt Creator"))
+				.setText(Tr::tr("🚪 Quit Qt Creator"))
 				.addOnTriggered(this, &Qt_MCP_PluginPlugin::executeQuit);
 	}
 
@@ -355,10 +374,103 @@ private:
 		dialog.exec();
 	}
 
-	void executeGetVersion()
+	void executeMCPInitialize()
 	{
-		QString version = m_commandsP->getVersion();
-		outputMessage(QString("MCP Plugin Version: %1").arg(version));
+		if (!m_serverP || !m_serverP->isRunning()) {
+			outputMessage("❌ MCP Server is not running. Please start Qt Creator first.");
+			return;
+		}
+		
+		// Create JSON-RPC request for MCP initialize
+		QJsonObject request;
+		request["jsonrpc"] = "2.0";
+		request["method"] = "initialize";
+		request["id"] = 1;
+		
+		QJsonObject params;
+		params["protocolVersion"] = "2024-11-05";
+		params["capabilities"] = QJsonObject();
+		
+		QJsonObject clientInfo;
+		clientInfo["name"] = "Qt Creator";
+		clientInfo["version"] = "1.0.0";
+		params["clientInfo"] = clientInfo;
+		
+		request["params"] = params;
+		
+		QJsonDocument doc(request);
+		QString requestJson = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
+		outputMessage(QString("MCP Initialize Request: %1").arg(requestJson));
+		
+		// Actually call the MCP server and get the real response
+		QJsonObject response = m_serverP->callMCPMethod("initialize", params);
+		
+		if (response.contains("error")) {
+			outputMessage(QString("❌ MCP Error: %1").arg(response["error"].toObject()["message"].toString()));
+		} else if (response.contains("result")) {
+			QJsonObject result = response["result"].toObject();
+			outputMessage("✅ MCP Initialize successful!");
+			
+			if (result.contains("protocolVersion")) {
+				outputMessage(QString("  Protocol Version: %1").arg(result["protocolVersion"].toString()));
+			}
+			if (result.contains("serverInfo")) {
+				QJsonObject serverInfo = result["serverInfo"].toObject();
+				if (serverInfo.contains("name")) {
+					outputMessage(QString("  Server Name: %1").arg(serverInfo["name"].toString()));
+				}
+				if (serverInfo.contains("version")) {
+					outputMessage(QString("  Server Version: %1").arg(serverInfo["version"].toString()));
+				}
+			}
+			if (result.contains("capabilities")) {
+				outputMessage(QString("  Capabilities: %1").arg(QJsonDocument(result["capabilities"].toObject()).toJson(QJsonDocument::Compact)));
+			}
+		} else {
+			outputMessage("❌ No result in MCP response");
+		}
+	}
+
+	void executeMCPToolsList()
+	{
+		if (!m_serverP || !m_serverP->isRunning()) {
+			outputMessage("❌ MCP Server is not running. Please start Qt Creator first.");
+			return;
+		}
+		
+		// Create JSON-RPC request for MCP tools/list
+		QJsonObject request;
+		request["jsonrpc"] = "2.0";
+		request["method"] = "tools/list";
+		request["id"] = 1;
+		
+		QJsonDocument doc(request);
+		QString requestJson = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
+		outputMessage(QString("MCP Tools List Request: %1").arg(requestJson));
+		
+		// Actually call the MCP server and get the real response
+		QJsonObject response = m_serverP->callMCPMethod("tools/list", QJsonValue());
+		
+		if (response.contains("error")) {
+			outputMessage(QString("❌ MCP Error: %1").arg(response["error"].toObject()["message"].toString()));
+		} else if (response.contains("result")) {
+			QJsonObject result = response["result"].toObject();
+			if (result.contains("tools")) {
+				QJsonArray tools = result["tools"].toArray();
+				outputMessage(QString("✅ Found %1 MCP tools:").arg(tools.size()));
+				
+				for (const QJsonValue &toolValue : tools) {
+					QJsonObject tool = toolValue.toObject();
+					QString name = tool["name"].toString();
+					QString description = tool["description"].toString();
+					outputMessage(QString("  • %1: %2").arg(name, description));
+				}
+			} else {
+				outputMessage("❌ Invalid MCP response format");
+			}
+		} else {
+			outputMessage("❌ No result in MCP response");
+		}
 	}
 
 	void executeListSessions()

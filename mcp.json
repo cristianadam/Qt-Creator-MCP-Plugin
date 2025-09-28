@@ -1,0 +1,103 @@
+{
+  "name": "Qt MCP Plugin",
+  "version": "1.31.0",
+  "description": "A Qt Creator plugin that implements the Model Context Protocol (MCP) for AI control of Qt Creator",
+  "type": "qt-creator-plugin",
+  "mcp": {
+    "server": {
+      "port": 3001,
+      "protocol": "2024-11-05",
+      "capabilities": {
+        "tools": {
+          "listChanged": false
+        }
+      }
+    },
+    "tools": [
+      {
+        "name": "build",
+        "description": "Build the current project",
+        "timeout": "20 minutes"
+      },
+      {
+        "name": "getBuildStatus",
+        "description": "Get current build progress and status",
+        "timeout": "default"
+      },
+      {
+        "name": "debug",
+        "description": "Start debugging the current project",
+        "timeout": "1 minute"
+      },
+      {
+        "name": "loadSession",
+        "description": "Load a Qt Creator session",
+        "timeout": "2 minutes"
+      },
+      {
+        "name": "openFile",
+        "description": "Open a file in Qt Creator",
+        "timeout": "default"
+      },
+      {
+        "name": "listProjects",
+        "description": "List all available projects",
+        "timeout": "default"
+      },
+      {
+        "name": "listIssues",
+        "description": "List build errors and warnings",
+        "timeout": "default"
+      }
+    ]
+  },
+  "build": {
+    "system": "cmake",
+    "minimum_version": "3.16",
+    "language": "cpp20",
+    "dependencies": [
+      "Qt Creator 6.9.2",
+      "Qt 6.9.2",
+      "Qt Plugin Development"
+    ],
+    "commands": {
+      "configure": "cmake -DCMAKE_PREFIX_PATH=\"<qt-creator-path>\" -B build",
+      "build": "cmake --build build --target InstallPlugin",
+      "test": "echo '{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"id\":1}' | nc localhost 3001"
+    },
+    "scripts": {
+      "unix": "./build.sh",
+      "windows": "build.bat",
+      "python": "python3 build.py"
+    },
+    "auto_cleanup": true,
+    "auto_install": true
+  },
+  "platforms": {
+    "macos": {
+      "qt_creator_path": "/Users/<username>/Developer/Qt/Qt Creator.app/Contents/Resources",
+      "install_paths": [
+        "/Users/<username>/Developer/Qt/Qt Creator.app/Contents/PlugIns/qtcreator"
+      ]
+    },
+    "windows": {
+      "qt_creator_path": "C:/Qt/Qt Creator/6.9.2/msvc2022_64",
+      "install_paths": [
+        "C:/Qt/Tools/QtCreator/lib/qtcreator/plugins"
+      ]
+    },
+    "linux": {
+      "qt_creator_path": "/opt/qtcreator",
+      "install_paths": [
+        "/usr/lib/qtcreator/plugins"
+      ]
+    }
+  },
+  "usage": {
+    "prompts": [
+      "Build and install the Qt MCP Plugin. Make sure to clean up any previous versions first.",
+      "Test that the plugin loads correctly and the MCP server is responding on port 3001.",
+      "Install the plugin so it loads automatically when I launch Qt Creator normally."
+    ]
+  }
+}

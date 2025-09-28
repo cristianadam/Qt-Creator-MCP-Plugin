@@ -1,0 +1,73 @@
+# Qt MCP Plugin - Cursor AI Build Instructions
+
+## Project Overview
+This is a Qt Creator plugin that implements the Model Context Protocol (MCP) for AI control of Qt Creator.
+
+## Build Process
+The build process is fully automated via CMake. Use these commands:
+
+### Prerequisites Check
+1. Verify Qt Creator is installed with Qt Plugin Development components (version auto-detected)
+2. Check CMake 3.16+ is available
+3. Ensure C++20 compiler is available
+
+### Build Commands
+
+**Recommended: Use the automated build script**
+```bash
+# Complete lifecycle: quit Qt, uninstall old, build new, install, test
+./build.sh
+# Or directly: python3 build.py
+```
+
+**Manual build process:**
+```bash
+# Configure (only needed once or after cleaning)
+cmake -DCMAKE_PREFIX_PATH="/Users/$(whoami)/Developer/Qt/Qt Creator.app/Contents/Resources" -B build
+
+# Build and Install (handles cleanup automatically)
+cmake --build build --target InstallPlugin
+
+# Test MCP server
+echo '{"jsonrpc":"2.0","method":"initialize","id":1}' | nc localhost 3001
+```
+
+### Platform-Specific Paths
+- **macOS**: `/Users/$(whoami)/Developer/Qt/Qt Creator.app/Contents/Resources`
+- **Windows**: `C:/Qt/Tools/QtCreator/lib` (Qt version auto-detected)
+- **Linux**: `/opt/qtcreator` or `/usr/lib/qtcreator`
+
+### Complete Lifecycle Management
+
+The build script handles the full lifecycle:
+
+1. **🔄 Quit Qt Creator**: Attempts graceful MCP quit, falls back to force kill
+2. **🧹 Clean old versions**: Removes previous plugin installations
+3. **📈 Auto-bump version**: Version incremented automatically during build
+4. **🔨 Build & Install**: Compiles and installs to correct directories
+5. **🚀 Launch Qt Creator**: Starts Qt Creator automatically
+6. **🧪 Verify installation**: Tests MCP server and confirms correct version
+
+### Key Targets
+- `InstallPlugin` - Builds, cleans old versions, and installs plugin
+- `CleanOldPlugins` - Removes previous plugin versions
+- `RunQtCreator` - Launches Qt Creator with plugin
+
+### Auto-Installation
+The plugin installs to:
+- App bundle only (for automatic loading)
+
+### Testing & Verification
+After installation, the script automatically:
+- ✅ Verifies MCP server responds on port 3001
+- ✅ Tests plugin version is correct
+- ✅ Confirms tools discovery works
+- ✅ Reports success/failure with clear status
+
+## Common Issues
+- Plugin conflicts: Use `InstallPlugin` target (auto-cleans)
+- MCP server not responding: Check Qt Creator is running
+- Build failures: Verify Qt Creator path in CMAKE_PREFIX_PATH
+
+## MCP Protocol
+Implements standard MCP methods: `initialize`, `tools/list`, `tools/call`
