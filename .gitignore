@@ -98,6 +98,7 @@ Makefile
 *.so
 *.a
 *.lib
+build.log
 
 # Build directories
 build/
