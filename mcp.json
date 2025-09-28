@@ -66,9 +66,7 @@
       "test": "echo '{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"id\":1}' | nc localhost 3001"
     },
     "scripts": {
-      "unix": "./build.sh",
-      "windows": "build.bat",
-      "python": "python3 build.py"
+      "cross_platform": "python3 build.py"
     },
     "auto_cleanup": true,
     "auto_install": true

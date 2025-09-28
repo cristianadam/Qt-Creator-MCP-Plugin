@@ -36,7 +36,6 @@ The plugin adds a **Tools → MCP Plugin** menu to Qt Creator and runs an MCP se
 
 **Build & Install:**
 ```bash
-./build.sh                    # macOS/Linux
 python3 build.py              # Cross-platform Python script
 ```
 
